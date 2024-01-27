@@ -9,53 +9,55 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
 
-## Analisis del datasets
+## Dataset Analysis
 
-df = pd.read_csv("/home/alejandro/proyectos/platzi/ia/machine_learning/Logisticas/dataframe.csv")
+df = pd.read_csv("/home/alejandro/proyectos/platzi/ia/machine_learning/Logisticas/simple/dataframe.csv")
 
-# print(df.head())
-# print()
-# print(df.info()) # Se observa que la columna de TotalCharges es del tipo objeto, esto es rato ya que solo debe contener valores numericos
+print(df.head())
+print()
+print(df.info()) # It's observed that the TotalCharges column is of object type, which is odd since it should only contain numerical values
 
-# # def plot(n):
-# #     sns.countplot(data=df, x=n, hue="Churn")
-# #     plt.show()
+# Plots of how other features relate to "Churn"
 
-# # categorical_col = df.select_dtypes("object").columns
-# # for i in categorical_col:
-# #     plot(i)
+def plot(n):
+    sns.countplot(data=df, x=n, hue="Churn")
+    plt.show()
 
-# sns.pairplot(data=df, hue="Churn")
-# plt.show()
+categorical_col = df.select_dtypes("object").columns
+for i in categorical_col:
+    plot(i)
 
-# Preprocesamiento del dataset
+sns.pairplot(data=df, hue="Churn")
+plt.show()
 
-df.TotalCharges = pd.to_numeric(df.TotalCharges, errors="coerce") # Con esto se transforma la columna a tipo numerico ignorando los errores
+# Dataset Preprocessing
+
+df.TotalCharges = pd.to_numeric(df.TotalCharges, errors="coerce") # This converts the column to numeric type, ignoring errors
 
 print()
-print(df.isna().sum()) # 11 valores detectados como "na" no-a-number
+print(df.isna().sum()) # 11 values detected as "na" not-a-number
 
-df.dropna(inplace=True) # Se eliminan los valores na
-df.drop(["customerID"], axis=1, inplace=True) # Se elimina la columna customerID por ser innecesaria
+df.dropna(inplace=True) # NA values are dropped
+df.drop(["customerID"], axis=1, inplace=True) # The customerID column is dropped as it's unnecessary
 
 df_prepro = df.copy()
 df_prepro = pd.get_dummies(df, drop_first=True, dtype=int)
 
-# Calcular la correlación con respecto a la variable de interés
+# Calculate correlation with respect to the target variable
 correlations = df_prepro.corr()[["Churn_Yes"]].sort_values(by="Churn_Yes", ascending=True)
 
-# Configurar el estilo de Seaborn para mejorar la apariencia del gráfico
+# Set Seaborn style to enhance the appearance of the plot
 sns.set(style='whitegrid')
 
-# Crear un gráfico de barras ascendente (histograma) de las correlaciones
+# Create an ascending bar plot (histogram) of the correlations
 plt.figure(figsize=(10, 6))
 sns.barplot(x=correlations["Churn_Yes"], y=correlations.index, palette='viridis')
 
-# Configurar las etiquetas y el título del gráfico
-plt.xlabel(f'Correlación con {"Churn_Yes"}')
-plt.title(f'Correlación de variables con respecto a {"Churn_Yes"}')
+# Configure plot labels and title
+plt.xlabel(f'Correlation with {"Churn_Yes"}')
+plt.title(f'Variable Correlation with {"Churn_Yes"}')
 
-# Mostrar el gráfico
+# Show the plot
 plt.show()
 
 scaler = MinMaxScaler()
@@ -64,7 +66,7 @@ df_prepro_scale = scaler.fit_transform(df_prepro)
 df_prepro_scale = pd.DataFrame(df_prepro_scale)
 df_prepro_scale.columns = df_prepro.columns
 
-## Entrenamiento
+## Training
 
 x = df_prepro_scale.drop(["Churn_Yes"], axis=1)
 y = df_prepro_scale["Churn_Yes"].values
@@ -74,11 +76,11 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_
 model = LogisticRegression()
 model.fit(x_train,y_train)
 
-# Prediccion
+## Prediction and Metrics
 pred = model.predict(x_test)
-print(f"La presicion es de: {accuracy_score(y_test,pred)}")
+print(f"Accuracy is: {accuracy_score(y_test,pred)}")
 
-# Matriz de confucion
+# Confusion Matrix
 cm = confusion_matrix(y_test, pred, labels=model.classes_)
 disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=model.classes_)
 disp.plot(cmap="terrain")
